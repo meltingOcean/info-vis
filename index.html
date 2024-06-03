@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3-legend/2.25.6/d3-legend.min.js"></script>
+    <script src="https://unpkg.com/@popperjs/core@2"></script>
+    <script src="https://unpkg.com/topojson-client@3"></script>
+
+    <script src="usmap.js"></script>
+    <script src="histogram.js"></script>
+
+    <title>Airport Finder</title>
+    <style>
+        body {
+            background: #eee;
+            overflow-y: scroll;
+            width:  100%;
+        }
+
+        .container {
+            
+            max-width: 1800px;
+            background: white;
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <nav class="container navbar navbar-light bg-light">
+            <div class="container-fluid">
+                <span class="navbar-brand mb-0 h1">Airport Finder</span>
+            </div>
+        </nav>
+    </header>
+
+    <main class="container pb-3">
+        <div class="text-center">
+            <svg id="usmap"></svg>
+            <div class="tooltip bs-tooltip-top show" id="um-tooltip" role="tooltip">
+                <div class="tooltip-arrow"></div>
+                <div class="tooltip-inner">
+                    Some tooltip text!
+                </div>
+            </div>
+            <svg id="histogram"></svg>
+        </div>
+        <div class="row pt-2">
+            <div class="col-4">
+                <label for="latitude-range" class="form-label">Latitude:</label>
+                <input type="range" class="form-range" min="20" max="50" step="0.1" id="latitude-range">
+                <span id="latitude-value">35</span>
+            </div>
+            <div class="col-4">
+                <label for="longitude-range" class="form-label">Longitude:</label>
+                <input type="range" class="form-range" min="-130" max="-60" step="0.1" id="longitude-range">
+                <span id="longitude-value">-95</span>
+            </div>
+            <div class="col-4">
+                <label for="size-range" class="form-label">Size:</label>
+                <input type="range" class="form-range" min="50" max="200" step="1" id="size-range">
+                <span id="size-value">100</span>
+            </div>
+        </div>
+        <div class="row pt-2">
+            <div class="col-4">
+                <label for="min-elevation" class="form-label">Min Elevation(ft):</label>
+                <input type="range" class="form-range" min="0" max="10000" step="1" value="0" id="min-elevation">
+                <span id="min-elevation-value">0ft</span>
+            </div>
+            <div class="col-4">
+                <label for="max-elevation" class="form-label">Max Elevation(ft):</label>
+                <input type="range" class="form-range" min="0" max="10000" step="1" value="10000" id="max-elevation">
+                <span id="max-elevation-value">10000ft</span>
+            </div>
+        </div>
+        
+        <div class="row pt-2">
+            <div class="col-1 text-end pe-2"><strong>Airport type:</strong></div>
+            <div class="col-11">
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="checkbox" name="color-encoding" value="Aerodome" id="color-aerodome">
+                    <label class="form-check-label" for="color-aerodome">Aerodome</label>
+                </div>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="checkbox" name="color-encoding" value="Heliport" id="color-heliport">
+                    <label class="form-check-label" for="color-heliport">Heliport</label>
+                </div>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="checkbox" name="color-encoding" value="Seaport" id="color-seaport">
+                    <label class="form-check-label" for="color-seaport">Seaport</label>
+                </div>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="checkbox" name="color-encoding" value="Gliderport" id="color-gliderport">
+                    <label class="form-check-label" for="color-gliderport">Gliderport</label>
+                </div>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="checkbox" name="color-encoding" value="Ultralightport" id="color-ultralightport">
+                    <label class="form-check-label" for="color-ultralightport">Ultralightport</label>
+                </div>
+            </div>         
+        </div>
+       
+    </main>
+
+    <script>
+        let data, brushedData, usmap, histogram, min, max;
+
+        function updateUSmap() {
+            const selectedTypes = [];
+            d3.selectAll("input[type=checkbox][name=color-encoding]:checked").each(function() {
+                selectedTypes.push(this.value);
+            });
+            usmap.update(selectedTypes, min, max);
+        }
+
+        function updateHistogram() {
+            histogram.update(brushedData && brushedData.length > 0 ? brushedData : data, "variety");
+        }
+
+        d3.csv("https://raw.githubusercontent.com/meltingOcean/info-vis/main/us_airports.csv")
+            .then(csvData => {
+                csvData.forEach(d => { });
+
+                data = csvData;
+
+                usmap = new USmap("#usmap", "#um-tooltip", data);
+                usmap.initialize();
+                min = d3.select("#min-elevation").node().value; 
+                max = d3.select("#max-elevation").node().value; 
+                console.log(min);
+                console.log(max);
+                
+                updateUSmap();
+
+                d3.selectAll("input[type=checkbox][name=color-encoding]").on("change", updateUSmap);
+
+                histogram = new Histogram("#histogram");
+                histogram.initialize();
+
+                updateHistogram();
+            });
+    </script>
+</body>
+
+</html>
