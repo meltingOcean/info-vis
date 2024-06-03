@@ -7,7 +7,7 @@ class Histogram {
         this.svg = svg;
         this.width = width;
         this.height = height;
-        this.colorScale = null; // Initialize colorScale
+        this.colorScale = null; 
     }
 
     initialize() {
@@ -61,7 +61,7 @@ class Histogram {
             .attr("y", d => this.yScale(d.elevation))
             .attr("width", this.xScale.bandwidth())
             .attr("height", d => this.height - this.yScale(d.elevation))
-            .attr("fill", d => this.colorScale(d.airport_type)); // Set color based on airport type
+            .attr("fill", d => this.colorScale(d.airport_type));
 
         this.xAxis
             .attr("transform", `translate(${this.margin.left}, ${this.margin.top + this.height})`)
@@ -76,6 +76,6 @@ class Histogram {
     }
 
     setColorScale(colorScale) {
-        this.colorScale = colorScale; // Method to set the color scale
+        this.colorScale = colorScale;
     }
 }
